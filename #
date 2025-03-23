@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>পৃষ্ঠা উপলব্ধ নয় - Page Not Available</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(45deg, #f06, #3cf, #6cf, #f06);
+            background-size: 400% 400%;
+            animation: gradientAnimation 10s infinite alternate;
+            color: #fff;
+            text-align: center;
+            overflow: hidden; /* অ্যানিমেশন বর্ডার ছাড়িয়ে গেলে লুকানোর জন্য */
+        }
+
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translate(-50%, -70%); }
+            100% { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+        }
+
+        .back-button {
+            background-color: #5cb85c;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            animation: slideInUp 1s ease-out;
+        }
+
+        .back-button:hover {
+            background-color: #4cae4c;
+        }
+
+        @keyframes slideInUp {
+            0% { transform: translateY(50px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        /* অতিরিক্ত ডিজাইন উপাদান */
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.8; transform: scale(1); }
+            100% { opacity: 1.2; transform: scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>এই পেজটি আপনার জন্য উপলব্ধ নয়</h1>
+        <p>This page is not available for you.</p>
+        <a href="javascript:history.back()" class="back-button">পেছনে যান / Go Back</a>
+    </div>
+
+    <script>
+        // কিছু তারা তৈরি করা যাক
+        const body = document.body;
+        for (let i = 0; i < 50; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            const size = Math.random() * 5 + 2; // 2px থেকে 7px পর্যন্ত সাইজ
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.top = `${Math.random() * 100}vh`;
+            star.style.left = `${Math.random() * 100}vw`;
+            star.style.animationDelay = `${Math.random() * 2}s`;
+            body.appendChild(star);
+        }
+    </script>
+
+</body>
+</html>
