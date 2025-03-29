@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transformer Architecture Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .dark {
+            color-scheme: dark;
+        }
+        .dark .svg-container svg {
+            filter: invert(1);
+        }
+        .attention-line {
+            stroke-dasharray: 5;
+            animation: dashOffset 2s linear infinite;
+        }
+        @keyframes dashOffset {
+            from { stroke-dashoffset: 20; }
+            to { stroke-dashoffset: 0; }
+        }
+        .layer-block {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .layer-block:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .codeblock {
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold mb-4 text-primary">Transformer Architecture Visualization</h1>
+            <p class="text-lg text-gray-600 dark:text-gray-400">Explore the inner workings of modern transformer neural networks</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow col-span-1">
+                <h2 class="text-xl font-bold mb-4">Control Panel</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="architecture" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Architecture Type</label>
+                        <select id="architecture" class="w-full p-2 border rounded-md bg-white dark:bg-gray-700 text-base">
+                            <option value="encoder">Encoder Only (BERT)</option>
+                            <option value="decoder">Decoder Only (GPT)</option>
+                            <option value="encoder-decoder">Encoder-Decoder (T5)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="layers" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Number of Layers</label>
+                        <input type="range" id="layers" min="1" max="6" value="3" class="w-full">
+                        <output for="layers" id="layers-value" class="text-sm text-right block">3</output>
+                    </div>
+                    <div>
+                        <label for="heads" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Attention Heads</label>
+                        <input type="range" id="heads" min="1" max="12" value="6" class="w-full">
+                        <output for="heads" id="heads-value" class="text-sm text-right block">6</output>
+                    </div>
+                    <div>
+                        <label for="dimension" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model Dimension</label>
+                        <select id="dimension" class="w-full p-2 border rounded-md bg-white dark:bg-gray-700 text-base">
+                            <option value="256">256 (Small)</option>
+                            <option value="512" selected>512 (Medium)</option>
+                            <option value="768">768 (Large)</option>
+                            <option value="1024">1024 (XL)</option>
+                        </select>
+                    </div>
+                    <button id="btn-simulate" class="bg-primary hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded w-full mt-4">
+                        Run Simulation
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow col-span-1 md:col-span-3">
+                <h2 class="text-xl font-bold mb-4">Model Architecture</h2>
+                <div id="architecture-visualization" class="svg-container bg-white dark:bg-gray-700 rounded-lg p-4 overflow-auto h-96">
+                    <!-- SVG will be generated here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow">
+                <h2 class="text-xl font-bold mb-4">Input Processing</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="input-text" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Input Text</label>
+                        <textarea id="input-text" rows="3" class="w-full p-2 border rounded-md bg-white dark:bg-gray-700 text-base" placeholder="Enter text to process through the model...">The transformer architecture revolutionized natural language processing.</textarea>
+                    </div>
+                    <div id="tokenization-result" class="bg-white dark:bg-gray-700 rounded-lg p-3 text-sm font-mono overflow-x-auto max-h-32">
+                        <!-- Tokenization result will appear here -->
+                    </div>
+                    <div>
+                        <button id="btn-tokenize" class="bg-primary hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+                            Tokenize Input
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow">
+                <h2 class="text-xl font-bold mb-4">Multi-Head Attention</h2>
+                <div id="attention-visualization" class="bg-white dark:bg-gray-700 rounded-lg p-4 h-64 flex items-center justify-center">
+                    <!-- Attention visualization will be generated here -->
+                    <p class="text-gray-500 dark:text-gray-400 text-center">Select a layer to view its attention pattern</p>
+                </div>
+                <div class="mt-4">
+                    <select id="attention-layer" class="w-full p-2 border rounded-md bg-white dark:bg-gray-700 text-base">
+                        <option value="none">Select a layer...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-bold mb-4">Implementation Guide</h2>
+            <div class="space-y-4">
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold mb-2 text-primary">TransformerEncoderLayer Implementation</h3>
+                    <div class="bg-white dark:bg-gray-700 rounded-lg p-4 overflow-x-auto">
+                        <pre class="codeblock text-sm text-gray-800 dark:text-gray-300">
+public class TransformerEncoderLayer
+{
+    private int modelSize;
+    private int numHeads;
+    private int ffSize;
+    private int maxPosition;
+    
+    // Q, K, V weights
+    private double[][] weightsQuery;
+    private double[][] weightsKey;
+    private double[][] weightsValue;
+    
+    // Feed-forward weights
+    private double[][] weightsFeedForward1;
+    private double[][] weightsFeedForward2;
+    private double[][] weightsOutput;
+    
+    // For advanced mechanisms
+    public MultiHeadAttention multiHeadAttention;
+    private FlashAttention flashAttention;
+    private int quantizationBits = 0;
+    
+    public TransformerEncoderLayer(int modelSize, int numHeads, int ffSize, int maxPosition)
+    {
+        this.modelSize = modelSize;
+        this.numHeads = numHeads;
+        this.ffSize = ffSize;
+        this.maxPosition = maxPosition;
+        
+        // Initialize weights
+        InitializeWeights();
+        
+        // Initialize multiHeadAttention
+        this.multiHeadAttention = new MultiHeadAttention(numHeads, modelSize);
+    }
+    
+    // Missing method #1 - EnableFlashAttention
+    public void EnableFlashAttention(FlashAttention flashAttn)
+    {
+        this.flashAttention = flashAttn;
+    }
+    
+    // Missing method #2 - SetQuantization
+    public void SetQuantization(int bits)
+    {
+        this.quantizationBits = bits;
+    }
+    
+    // Core processing methods
+    public double[] Forward(double[] input, int position)
+    {
+        // Implementation of the forward pass
+        // ...
+    }
+    
+    // Getters and setters for weights
+    public double[][] GetWeightsQuery() { return weightsQuery; }
+    public void SetWeightsQuery(double[][] weights) { this.weightsQuery = weights; }
+    
+    public double[][] GetWeightsKey() { return weightsKey; }
+    public void SetWeightsKey(double[][] weights) { this.weightsKey = weights; }
+    
+    public double[][] GetWeightsValue() { return weightsValue; }
+    public void SetWeightsValue(double[][] weights) { this.weightsValue = weights; }
+    
+    public double[][] GetWeightsFeedForward1() { return weightsFeedForward1; }
+    public void SetWeightsFeedForward1(double[][] weights) { this.weightsFeedForward1 = weights; }
+    
+    public double[][] GetWeightsFeedForward2() { return weightsFeedForward2; }
+    public void SetWeightsFeedForward2(double[][] weights) { this.weightsFeedForward2 = weights; }
+    
+    public double[][] GetWeightsOutput() { return weightsOutput; }
+    public void SetWeightsOutput(double[][] weights) { this.weightsOutput = weights; }
+    
+    // Additional methods for KV values and attention computation
+    public double[][] ComputeKVValues(double[] input) { /*...*/ return null; }
+    public void ApplyCachedKVValues(double[][] keyValues) { /*...*/ }
+    public double[] Backward(double[] gradient, double[] outputGradient) { /*...*/ return null; }
+    public void ApplyWeightUpdates(double[][] updates, double learningRate, int epoch) { /*...*/ }
+    public double[][] GetAttentionError(double[][] query, double[][] key, double[][] value, double[][] error) { /*...*/ return null; }
+}
+                        </pre>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-2 text-primary">FlashAttention Implementation</h3>
+                    <div class="bg-white dark:bg-gray-700 rounded-lg p-4 overflow-x-auto">
+                        <pre class="codeblock text-sm text-gray-800 dark:text-gray-300">
+public class FlashAttention
+{
+    private readonly int modelSize;
+    private readonly int numHeads;
+    private readonly int headDim;
+
+    public FlashAttention(int modelSize, int numHeads, int headDim)
+    {
+        this.modelSize = modelSize;
+        this.numHeads = numHeads;
+        this.headDim = headDim;
+    }
+
+    // Efficient attention computation
+    public double[][] ComputeAttention(
+        double[][] queries,
+        double[][] keys,
+        double[][] values,
+        double scale,
+        bool[][] mask = null)
+    {
+        // Implementation for efficient attention computation
+        // This would normally use tiling and SIMD instructions
+        // ...
+        
+        return /* computed attention */;
+    }
+}
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-bold mb-4">Component Explanation</h2>
+            <div id="component-details" class="space-y-6">
+                <div>
+                    <h3 class="font-semibold text-lg mb-2 text-primary">Encoder Layer</h3>
+                    <p class="text-gray-700 dark:text-gray-300">The encoder layer consists of multi-head self-attention followed by a position-wise feed-forward network. Each sub-layer has a residual connection and layer normalization.</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg mb-2 text-primary">Multi-Head Attention</h3>
+                    <p class="text-gray-700 dark:text-gray-300">Multi-head attention allows the model to jointly attend to information from different representation subspaces. It's computed by applying multiple attention functions in parallel and concatenating the results.</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg mb-2 text-primary">Flash Attention</h3>
+                    <p class="text-gray-700 dark:text-gray-300">Flash Attention is an optimization technique that computes attention efficiently by using tiling to reuse data in fast memory. It reduces memory access and improves training and inference speed.</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg mb-2 text-primary">Quantization</h3>
+                    <p class="text-gray-700 dark:text-gray-300">Quantization reduces the precision of the model weights (e.g., from 32-bit to 8-bit or 4-bit) to decrease memory usage and improve inference speed, with a small sacrifice in accuracy.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check for dark mode preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        // Listen for changes in color scheme
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Architecture visualization
+        const architectureSelect = document.getElementById('architecture');
+        const layersSlider = document.getElementById('layers');
+        const layersValue = document.getElementById('layers-value');
+        const headsSlider = document.getElementById('heads');
+        const headsValue = document.getElementById('heads-value');
+        const dimensionSelect = document.getElementById('dimension');
+        const visualizationContainer = document.getElementById('architecture-visualization');
+        const simulateButton = document.getElementById('btn-simulate');
+        const tokenizeButton = document.getElementById('btn-tokenize');
+        const inputText = document.getElementById('input-text');
+        const tokenizationResult = document.getElementById('tokenization-result');
+        const attentionLayerSelect = document.getElementById('attention-layer');
+        const attentionVisualization = document.getElementById('attention-visualization');
+
+        // Update output values for sliders
+        layersSlider.addEventListener('input', () => {
+            layersValue.textContent = layersSlider.value;
+            updateAttentionLayerOptions();
+        });
+        
+        headsSlider.addEventListener('input', () => {
+            headsValue.textContent = headsSlider.value;
+        });
+
+        // Update attention layer options when architecture or layers change
+        architectureSelect.addEventListener('change', updateAttentionLayerOptions);
+        
+        function updateAttentionLayerOptions() {
+            const architecture = architectureSelect.value;
+            const numLayers = parseInt(layersSlider.value);
+            
+            // Clear current options
+            attentionLayerSelect.innerHTML = '<option value="none">Select a layer...</option>';
+            
+            // Add options based on architecture
+            for (let i = 0; i < numLayers; i++) {
+                if (architecture === 'encoder' || architecture === 'encoder-decoder') {
+                    const option = document.createElement('option');
+                    option.value = `encoder-${i}`;
+                    option.textContent = `Encoder Layer ${i + 1}`;
+                    attentionLayerSelect.appendChild(option);
+                }
+                
+                if (architecture === 'decoder' || architecture === 'encoder-decoder') {
+                    const option = document.createElement('option');
+                    option.value = `decoder-${i}`;
+                    option.textContent = `Decoder Layer ${i + 1}`;
+                    attentionLayerSelect.appendChild(option);
+                }
+            }
+        }
+        
+        // Generate architecture visualization
+        simulateButton.addEventListener('click', () => {
+            generateArchitectureVisualization();
+        });
+        
+        function generateArchitectureVisualization() {
+            const architecture = architectureSelect.value;
+            const numLayers = parseInt(layersSlider.value);
+            const numHeads = parseInt(headsSlider.value);
+            const dimension = parseInt(dimensionSelect.value);
+            
+            let svg = '';
+            
+            if (architecture === 'encoder') {
+                svg = generateEncoderVisualization(numLayers, numHeads, dimension);
+            } else if (architecture === 'decoder') {
+                svg = generateDecoderVisualization(numLayers, numHeads, dimension);
+            } else {
+                svg = generateEncoderDecoderVisualization(numLayers, numHeads, dimension);
+            }
+            
+            visualizationContainer.innerHTML = svg;
+            
+            // Add interactivity to layer blocks
+            document.querySelectorAll('.layer-block').forEach(block => {
+                block.addEventListener('click', () => {
+                    const layerId = block.getAttribute('data-layer-id');
+                    if (layerId) {
+                        attentionLayerSelect.value = layerId;
+                        generateAttentionVisualization(layerId);
+                    }
+                });
+            });
+        }
+        
+        function generateEncoderVisualization(numLayers, numHeads, dimension) {
+            const width = 600;
+            const height = numLayers * 120 + 100;
+            
+            let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+            
+            // Input embedding
+            svg += `
+                <rect x="250" y="20" width="100" height="40" rx="5" fill="#5D5CDE" class="layer-block" />
+                <text x="300" y="45" text-anchor="middle" fill="white" font-size="14">Input Embedding</text>
+            `;
+            
+            // Positional encoding
+            svg += `
+                <rect x="400" y="20" width="120" height="40" rx="5" fill="#5D5CDE" class="layer-block" />
+                <text x="460" y="45" text-anchor="middle" fill="white" font-size="14">Positional Encoding</text>
+            `;
+            
+            // Add line connecting input to first layer
+            svg += `<line x1="300" y1="60" x2="300" y2="90" stroke="#5D5CDE" stroke-width="2" />`;
+            
+            // Encoder layers
+            for (let i = 0; i < numLayers; i++) {
+                const y = 90 + i * 120;
+                
+                // Layer container
+                svg += `<rect x="150" y="${y}" width="300" height="100" rx="5" fill="#f3f4f6" stroke="#5D5CDE" stroke-width="2" class="layer-block" data-layer-id="encoder-${i}" />`;
+                svg += `<text x="300" y="${y - 10}" text-anchor="middle" fill="#5D5CDE" font-size="14" font-weight="bold">Encoder Layer ${i + 1}</text>`;
+                
+                // Multi-head attention
+                svg += `
+                    <rect x="180" y="${y + 20}" width="240" height="30" rx="5" fill="#5D5CDE" />
+                    <text x="300" y="${y + 38}" text-anchor="middle" fill="white" font-size="12">Multi-Head Attention (${numHeads} heads)</text>
+                `;
+                
+                // Feed forward
+                svg += `
+                    <rect x="180" y="${y + 60}" width="240" height="30" rx="5" fill="#5D5CDE" />
+                    <text x="300" y="${y + 78}" text-anchor="middle" fill="white" font-size="12">Feed Forward (dim=${dimension})</text>
+                `;
+                
+                // Connect layers
+                if (i < numLayers - 1) {
+                    svg += `<line x1="300" y1="${y + 100}" x2="300" y2="${y + 120}" stroke="#5D5CDE" stroke-width="2" />`;
+                }
+            }
+            
+            svg += '</svg>';
+            return svg;
+        }
+        
+        function generateDecoderVisualization(numLayers, numHeads, dimension) {
+            const width = 600;
+            const height = numLayers * 160 + 100;
+            
+            let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+            
+            // Input embedding
+            svg += `
+                <rect x="250" y="20" width="100" height="40" rx="5" fill="#5D5CDE" class="layer-block" />
+                <text x="300" y="45" text-anchor="middle" fill="white" font-size="14">Input Embedding</text>
+            `;
+            
+            // Positional encoding
+            svg += `
+                <rect x="400" y="20" width="120" height="40" rx="5" fill="#5D5CDE" class="layer-block" />
+                <text x="460" y="45" text-anchor="middle" fill="white" font-size="14">Positional Encoding</text>
+            `;
+            
+            // Add line connecting input to first layer
+            svg += `<line x1="300" y1="60" x2="300" y2="90" stroke="#5D5CDE" stroke-width="2" />`;
+            
+            // Decoder layers
+            for (let i = 0; i < numLayers; i++) {
+                const y = 90 + i * 160;
+                
+                // Layer container
+                svg += `<rect x="150" y="${y}" width="300" height="140" rx="5" fill="#f3f4f6" stroke="#5D5CDE" stroke-width="2" class="layer-block" data-layer-id="decoder-${i}" />`;
+                svg += `<text x="300" y="${y - 10}" text-anchor="middle" fill="#5D5CDE" font-size="14" font-weight="bold">Decoder Layer ${i + 1}</text>`;
+                
+                // Masked multi-head attention
+                svg += `
+                    <rect x="180" y="${y + 20}" width="240" height="30" rx="5" fill="#5D5CDE" />
+                    <text x="300" y="${y + 38}" text-anchor="middle" fill="white" font-size="12">Masked Multi-Head Attention (${numHeads} heads)</text>
+                `;
+                
+                // Feed forward
+                svg += `
+                    <rect x="180" y="${y + 60}" width="240" height="30" rx="5" fill="#5D5CDE" />
+                    <text x="300" y="${y + 78}" text-anchor="middle" fill="white" font-size="12">Feed Forward (dim=${dimension})</text>
+                `;
+                
+                // KV Cache
+                svg += `
+                    <rect x="180" y="${y + 100}" width="240" height="30" rx="5" fill="#5D5CDE" />
+                    <text x="300" y="${y + 118}" text-anchor="middle" fill="white" font-size="12">KV Cache</text>
+                `;
+                
+                // Connect layers
+                if (i < numLayers - 1) {
+                    svg += `<line x1="300" y1="${y + 140}" x2="300" y2="${y + 160}" stroke="#5D5CDE" stroke-width="2" />`;
+                }
+            }
+            
+            // Linear layer and softmax
+            const finalY = 90 + numLayers * 160;
+            svg += `
+                <line x1="300" y1="${finalY}" x2="300" y2="${finalY + 20}" stroke="#5D5CDE" stroke-width="2" />
+                <rect x="180" y="${finalY + 20}" width="240" height="30" rx="5" fill="#5D5CDE" class="layer-block" />
+                <text x="300" y="${finalY + 38}" text-anchor="middle" fill="white" font-size="12">Linear + Softmax</text>
+            `;
+            
+            svg += '</svg>';
+            return svg;
+        }
+        
+        function generateEncoderDecoderVisualization(numLayers, numHeads, dimension) {
+            const width = 800;
+            const height = numLayers * 140 + 100;
+            
+            let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+            
+            // Input embedding
+            svg += `
+                <rect x="150" y="20" width="100" height="40" rx="5" fill="#5D5CDE" class="layer-block" />
+                <text x="200" y="45" text-anchor="middle" fill="white" font-size="14">Input Embedding</text>
+            `;
+            
+            // Positional encoding
+            svg += `
+                <rect x="280" y="20" width="120" height="40" rx="5" fill="#5D5CDE" class="layer-block" />
+                <text x="340" y="45" text-anchor="middle" fill="white" font-size="14">Positional Encoding</text>
+            `;
+            
+            // Add line connecting input to first encoder layer
+            svg += `<line x1="200" y1="60" x2="200" y2="90" stroke="#5D5CDE" stroke-width="2" />`;
+            
+            // Encoder layers
+            for (let i = 0; i < numLayers; i++) {
+                const y = 90 + i * 140;
+                
+                // Layer container
+                svg += `<rect x="100" y="${y}" width="200" height="100" rx="5" fill="#f3f4f6" stroke="#5D5CDE" stroke-width="2" class="layer-block" data-layer-id="encoder-${i}" />`;
+                svg += `<text x="200" y="${y - 10}" text-anchor="middle" fill="#5D5CDE" font-size="14" font-weight="bold">Encoder Layer ${i + 1}</text>`;
+                
+                // Multi-head attention
+                svg += `
+                    <rect x="120" y="${y + 20}" width="160" height="30" rx="5" fill="#5D5CDE" />
+                    <text x="200" y="${y + 38}" text-anchor="middle" fill="white" font-size="12">Multi-Head Attention (${numHeads})</text>
+                `;
+                
+                // Feed forward
+                svg += `
+                    <rect x="120" y="${y + 60}" width="160" height="30" rx="5" fill="#5D5CDE" />
+                    <text x="200" y="${y + 78}" text-anchor="middle" fill="white" font-size="12">Feed Forward (${dimension})</text>
+                `;
+                
+                // Connect encoder layers
+                if (i < numLayers - 1) {
+                    svg += `<line x1="200" y1="${y + 100}" x2="200" y2="${y + 140}" stroke="#5D5CDE" stroke-width="2" />`;
+                }
+            }
+            
+            // Output embedding
+            svg += `
+                <rect x="550" y="20" width="100" height="40" rx="5" fill="#5D5CDE" class="layer-block" />
+                <text x="600" y="45" text-anchor="middle" fill="white" font-size="14">Output Embedding</text>
+            `;
+            
+            // Positional encoding for decoder
+            svg += `
+                <rect x="400" y="20" width="120" height="40" rx="5" fill="#5D5CDE" class="layer-block" />
+                <text x="460" y="45" text-anchor="middle" fill="white" font-size="14">Positional Encoding</text>
+            `;
+            
+            // Add line connecting to first decoder layer
+            svg += `<line x1="600" y1="60" x2="600" y2="90" stroke="#5D5CDE" stroke-width="2" />`;
+            
+            // Decoder layers
+            for (let i = 0; i < numLayers; i++) {
+                const y = 90 + i * 140;
+                
+                // Layer container
+                svg += `<rect x="500" y="${y}" width="200" height="100" rx="5" fill="#f3f4f6" stroke="#5D5CDE" stroke-width="2" class="layer-block" data-layer-id="decoder-${i}" />`;
+                svg += `<text x="600" y="${y - 10}" text-anchor="middle" fill="#5D5CDE" font-size="14" font-weight="bold">Decoder Layer ${i + 1}</text>`;
+                
+                // Masked multi-head attention
+                svg += `
+                    <rect x="520" y="${y + 20}" width="160" height="30" rx="5" fill="#5D5CDE" />
+                    <text x="600" y="${y + 38}" text-anchor="middle" fill="white" font-size="12">Masked Attention (${numHeads})</text>
+                `;
+                
+                // Cross attention
+                svg += `
+                    <rect x="520" y="${y + 60}" width="160" height="30" rx="5" fill="#5D5CDE" />
+                    <text x="600" y="${y + 78}" text-anchor="middle" fill="white" font-size="12">Cross-Attention + FF</text>
+                `;
+                
+                // Connect decoder layers
+                if (i < numLayers - 1) {
+                    svg += `<line x1="600" y1="${y + 100}" x2="600" y2="${y + 140}" stroke="#5D5CDE" stroke-width="2" />`;
+                }
+                
+                // Draw cross-attention connection
+                svg += `<line x1="300" y1="${y + 50}" x2="520" y2="${y + 75}" stroke="#5D5CDE" stroke-width="2" class="attention-line" />`;
+            }
+            
+            // Linear layer and softmax
+            const finalY = 90 + numLayers * 140;
+            svg += `
+                <line x1="600" y1="${finalY}" x2="600" y2="${finalY + 20}" stroke="#5D5CDE" stroke-width="2" />
+                <rect x="520" y="${finalY + 20}" width="160" height="30" rx="5" fill="#5D5CDE" class="layer-block" />
+                <text x="600" y="${finalY + 38}" text-anchor="middle" fill="white" font-size="12">Linear + Softmax</text>
+            `;
+            
+            svg += '</svg>';
+            return svg;
+        }
+        
+        // Tokenization visualization
+        tokenizeButton.addEventListener('click', () => {
+            const text = inputText.value.trim();
+            if (!text) {
+                tokenizationResult.innerHTML = '<span class="text-red-500">Please enter some text.</span>';
+                return;
+            }
+            
+            // Simulate tokenization
+            const tokens = simulateTokenization(text);
+            displayTokenization(tokens);
+        });
+        
+        function simulateTokenization(text) {
+            // Simple word splitting for demonstration
+            const words = text.split(/\s+/);
+            
+            // Simulate subword tokenization
+            const tokens = [];
+            words.forEach(word => {
+                if (word.length > 5) {
+                    // Split longer words
+                    const prefix = word.substring(0, 3);
+                    const suffix = word.substring(3);
+                    tokens.push(prefix);
+                    tokens.push(suffix);
+                } else {
+                    tokens.push(word);
+                }
+            });
+            
+            // Add special tokens
+            tokens.unshift("[START]");
+            tokens.push("[END]");
+            
+            return tokens;
+        }
+        
+        function displayTokenization(tokens) {
+            tokenizationResult.innerHTML = '';
+            
+            tokens.forEach((token, i) => {
+                const span = document.createElement('span');
+                span.textContent = token;
+                span.className = 'inline-block px-1 py-0.5 m-1 rounded ';
+                
+                // Style differently based on token type
+                if (token.startsWith("[") && token.endsWith("]")) {
+                    span.className += 'bg-indigo-200 dark:bg-indigo-800';
+                } else {
+                    span.className += 'bg-blue-100 dark:bg-blue-900';
+                }
+                
+                span.title = `Token ID: ${i + 1}`;
+                tokenizationResult.appendChild(span);
+            });
+        }
+        
+        // Attention visualization
+        attentionLayerSelect.addEventListener('change', () => {
+            const layerId = attentionLayerSelect.value;
+            if (layerId === 'none') {
+                attentionVisualization.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center">Select a layer to view its attention pattern</p>';
+                return;
+            }
+            
+            generateAttentionVisualization(layerId);
+        });
+        
+        function generateAttentionVisualization(layerId) {
+            const [type, index] = layerId.split('-');
+            const numHeads = parseInt(headsSlider.value);
+            
+            // Get tokens from tokenization if available
+            let tokens = tokenizationResult.querySelectorAll('span');
+            const tokenLabels = [];
+            
+            if (tokens.length > 0) {
+                tokens.forEach(token => {
+                    tokenLabels.push(token.textContent);
+                });
+            } else {
+                // Default tokens
+                tokenLabels.push('[START]', 'the', 'transformer', 'architecture', '[END]');
+            }
+            
+            // Create attention matrix visualization
+            const size = 180;
+            const cellSize = size / tokenLabels.length;
+            
+            let svg = `
+                <svg width="${size + 60}" height="${size + 60}" viewBox="0 0 ${size + 60} ${size + 60}">
+                    <g transform="translate(50, 10)">
+            `;
+            
+            // Add token labels on top
+            for (let i = 0; i < tokenLabels.length; i++) {
+                svg += `
+                    <text x="${i * cellSize + cellSize/2}" y="0" 
+                          text-anchor="middle" transform="rotate(-45, ${i * cellSize + cellSize/2}, 0)"
+                          font-size="10" fill="currentColor">
+                        ${tokenLabels[i]}
+                    </text>
+                `;
+            }
+            
+            // Add token labels on left
+            for (let i = 0; i < tokenLabels.length; i++) {
+                svg += `
+                    <text x="0" y="${i * cellSize + cellSize/2 + 30}"
+                          text-anchor="end" dominant-baseline="middle"
+                          font-size="10" fill="currentColor">
+                        ${tokenLabels[i]}
+                    </text>
+                `;
+            }
+            
+            // Draw attention matrix cells
+            for (let i = 0; i < tokenLabels.length; i++) {
+                for (let j = 0; j < tokenLabels.length; j++) {
+                    // Simulate different attention patterns for different layer types
+                    let intensity = 0;
+                    
+                    if (type === 'encoder') {
+                        // Bidirectional attention
+                        intensity = simulateAttentionScore(i, j, parseInt(index), tokenLabels.length);
+                    } else if (type === 'decoder') {
+                        // Causal attention (can't look ahead)
+                        intensity = i >= j ? simulateAttentionScore(i, j, parseInt(index), tokenLabels.length) : 0;
+                    }
+                    
+                    const color = `rgba(93, 92, 222, ${intensity.toFixed(2)})`;
+                    
+                    svg += `
+                        <rect x="${j * cellSize}" y="${i * cellSize + 30}" 
+                              width="${cellSize}" height="${cellSize}"
+                              fill="${color}" stroke="#e5e7eb"
+                              data-from="${tokenLabels[i]}" data-to="${tokenLabels[j]}"
+                              data-score="${intensity.toFixed(2)}" />
+                    `;
+                }
+            }
+            
+            // Add a legend for attention weights
+            svg += `
+                <defs>
+                    <linearGradient id="attention-gradient" x1="0%" y1="0%" x2="100%" y1="0%">
+                        <stop offset="0%" stop-color="rgba(93, 92, 222, 0)" />
+                        <stop offset="100%" stop-color="rgba(93, 92, 222, 1)" />
+                    </linearGradient>
+                </defs>
+                <rect x="50" y="${size + 40}" width="100" height="10" fill="url(#attention-gradient)" />
+                <text x="50" y="${size + 60}" font-size="10" fill="currentColor">Low</text>
+                <text x="150" y="${size + 60}" font-size="10" text-anchor="end" fill="currentColor">High</text>
+            `;
+            
+            svg += `
+                    </g>
+                </svg>
+            `;
+            
+            attentionVisualization.innerHTML = svg;
+        }
+        
+        function simulateAttentionScore(i, j, layerIndex, seqLength) {
+            // Simulate different attention patterns
+            
+            // For start token, attend to everything
+            if (i === 0) {
+                return 0.8;
+            }
+            
+            // For end token, mostly attend to start
+            if (i === seqLength - 1 && j === 0) {
+                return 0.9;
+            }
+            
+            // Self-attention (diagonal)
+            if (i === j) {
+                return 0.7 + (layerIndex * 0.05);
+            }
+            
+            // Attention to previous token
+            if (j === i - 1) {
+                return 0.5 - (layerIndex * 0.05);
+            }
+            
+            // Some attention to start token
+            if (j === 0) {
+                return 0.3;
+            }
+            
+            // Random attention based on position and layer
+            return Math.max(0, Math.min(1, 
+                Math.sin(i * j * (layerIndex + 1) * 0.1) * 0.3 + 0.2
+            ));
+        }
+        
+        // Initialize the visualization with default values
+        updateAttentionLayerOptions();
+        generateArchitectureVisualization();
+    </script>
+</body>
+</html>
