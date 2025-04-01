@@ -2091,12 +2091,10 @@ ${message}
     });
 }*/
           
-
-
 // Google Sheets এ ডেটা সেভ করার ফাংশন
 async function saveToGoogleSheets(formData) {
     try {
-        const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1:append?valueInputOption=RAW&key=${K}`, {
+        const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${config.SHEET_ID}/values/Sheet1:append?valueInputOption=RAW&key=${config.API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
