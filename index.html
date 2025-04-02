@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://apis.google.com/js/api.js"></script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1158797123946133"
      crossorigin="anonymous"></script>
     <meta charset="UTF-8">
@@ -2090,13 +2091,52 @@ ${message}
         showSuccess();
     });
 }*/
+
+
+const DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
+const SCOPES = "https://www.googleapis.com/auth/spreadsheets";
+
+            // পেজ লোড হওয়ার পর
+window.onload = function() {
+    gapi.load('client:auth2', getAccessToken);
+}
+
+// OAuth2 টোকেন পাওয়ার ফাংশন
+async function getAccessToken() {
+    try {
+        await gapi.client.init({
+            apiKey: SECRET_API,
+            clientId: CLIENT_ID,
+            discoveryDocs: DISCOVERY_DOCS,
+            scope: SCOPES
+        });
+
+        // ইউজার লগইন করানো
+        const authInstance = gapi.auth2.getAuthInstance();
+        if (!authInstance.isSignedIn.get()) {
+            await authInstance.signIn();
+        }
+
+        // টোকেন পাওয়া
+        const currentUser = authInstance.currentUser.get();
+        const token = currentUser.getAuthResponse().access_token;
+        return token;
+    } catch (error) {
+        console.error('এরর:', error);
+        throw error;
+    }
+}
    
 // Google Sheets এ ডেটা সেভ করার ফাংশন
 async function saveToGoogleSheets(formData) {
     try {
-        const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SUPER_SECRET_ID}/values/Sheet1:append?valueInputOption=RAW&key=${SECRET_API}`, {
+        // OAuth2 টোকেন নিয়ে আসা
+        const token = await getAccessToken();
+        
+        const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SUPER_SECRET_ID}/values/Sheet1:append?valueInputOption=RAW`, {
             method: 'POST',
             headers: {
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -2105,7 +2145,7 @@ async function saveToGoogleSheets(formData) {
                     formData.email,
                     formData.subject,
                     formData.message,
-                    new Date().toISOString() // জমা দেওয়ার সময়
+                    new Date().toISOString()
                 ]]
             })
         });
