@@ -1,0 +1,17 @@
+name: main
+on: [push]
+
+jobs:
+  example-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Use Secret
+        env:
+          SUPER_SECRET_ID: ${{ secrets.SHEET_ID }}
+          SECRET_API: ${{ secrets.SHEET_API_KEY }}
+        run: |
+          echo "Using secret in script"
+          # এখানে আপনার প্রয়োজনীয় কমান্ড লিখুন
