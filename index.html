@@ -2169,7 +2169,7 @@ if (contactForm) {
             }
         } catch (error) {
             console.error('এরর:', error);
-            let errorMessage = 'একটি সমস্যা হয়েছে।';
+            /*let errorMessage = 'একটি সমস্যা হয়েছে।';
     
     if (error.name === 'NetworkError') {
         errorMessage = 'ইন্টারনেট সংযোগ চেক করুন।';
@@ -2184,7 +2184,7 @@ if (contactForm) {
         duration: 5000,
         isClosable: true,
         position: 'top-right'
-    });
+    });*/alert('দুঃখিত, একটি সমস্যা হয়েছে। আবার চেষ্টা করুন। ${error.message}');
         } finally {
             // সাবমিট বাটন রি-এনাবল
             submitButton.disabled = false;
