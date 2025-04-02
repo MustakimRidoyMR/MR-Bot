@@ -2209,22 +2209,7 @@ if (contactForm) {
             }
         } catch (error) {
             console.error('এরর:', error);
-            let errorMessage = 'একটি সমস্যা হয়েছে।';
-    
-    if (error.name === 'NetworkError') {
-        errorMessage = 'ইন্টারনেট সংযোগ চেক করুন।';
-    } else if (error.response?.status === 404) {
-        errorMessage = 'তথ্য পাওয়া যায়নি।';
-    }
-    
-    toast({
-        title: 'দুঃখিত',
-        description: `${error.message} একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।`,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-        position: 'top-right'
-    });
+            alert('দুঃখিত, একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।' + error);
         } finally {
             // সাবমিট বাটন রি-এনাবল
             submitButton.disabled = false;
