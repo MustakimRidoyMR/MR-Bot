@@ -2090,12 +2090,11 @@ ${message}
         showSuccess();
     });
 }*/
-            
-require('dotenv').config();
+   
 // Google Sheets এ ডেটা সেভ করার ফাংশন
 async function saveToGoogleSheets(formData) {
     try {
-        const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${process.env.SHEET_ID}/values/Sheet1:append?valueInputOption=RAW&key=${process.env.SHEET_API_KEY}`, {
+        const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SUPER_SECRET_ID}/values/Sheet1:append?valueInputOption=RAW&key=${SECRET_API}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -2170,7 +2169,22 @@ if (contactForm) {
             }
         } catch (error) {
             console.error('এরর:', error);
-            alert('দুঃখিত, একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+            let errorMessage = 'একটি সমস্যা হয়েছে।';
+    
+    if (error.name === 'NetworkError') {
+        errorMessage = 'ইন্টারনেট সংযোগ চেক করুন।';
+    } else if (error.response?.status === 404) {
+        errorMessage = 'তথ্য পাওয়া যায়নি।';
+    }
+    
+    toast({
+        title: 'দুঃখিত',
+        description: `${errorMessage} একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।`,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+        position: 'top-right'
+    });
         } finally {
             // সাবমিট বাটন রি-এনাবল
             submitButton.disabled = false;
