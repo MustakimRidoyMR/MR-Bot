@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Ball Catcher Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #5D5CDE;
+            --secondary-color: #FF6B6B;
+            --accent-color: #48CFAD;
+            --danger-color: #FF4757;
+            --light-bg: #FFFFFF;
+            --dark-bg: #181818;
+            --light-text: #333333;
+            --dark-text: #F5F5F5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            overflow: hidden;
+            background: var(--light-bg);
+            color: var(--light-text);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            cursor: none;
+        }
+
+        body.dark {
+            background: var(--dark-bg);
+            color: var(--dark-text);
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .dark #info-panel {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        #score {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            color: white;
+        }
+
+        .dark #start-screen, .dark #game-over-screen {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        #game-over-screen {
+            display: none;
+        }
+
+        #final-score {
+            font-size: 36px;
+            margin: 20px 0;
+            color: var(--accent-color);
+        }
+
+        #game-over-message {
+            font-size: 1.5rem;
+            color: var(--danger-color);
+            margin-bottom: 15px;
+        }
+
+        .game-button {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 18px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.3s;
+            box-shadow: 0 5px 15px rgba(93, 92, 222, 0.4);
+        }
+
+        .game-button:hover {
+            transform: scale(1.05);
+            background-color: #4a49ce;
+        }
+
+        .game-button:active {
+            transform: scale(0.98);
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-align: center;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding: 10px;
+        }
+
+        p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            text-align: center;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        #custom-cursor {
+            position: fixed;
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            transition: width 0.2s, height 0.2s, background-color 0.3s;
+            backdrop-filter: invert(0.2);
+            mix-blend-mode: difference;
+        }
+
+        #custom-cursor::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 5px;
+            height: 5px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+        }
+
+        #custom-cursor.active {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(93, 92, 222, 0.2);
+        }
+
+        #settings-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .control-button {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .dark .control-button {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #help-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 80%;
+            z-index: 200;
+            display: none;
+        }
+
+        .dark #help-popup {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        #help-popup h2 {
+            margin-bottom: 15px;
+            color: var(--accent-color);
+        }
+
+        #help-popup ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        #help-popup li {
+            margin-bottom: 10px;
+        }
+
+        #close-help {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .bubble-icon {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .bomb-icon {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            background-color: var(--danger-color);
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        #level-up-notification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(93, 92, 222, 0.8);
+            color: white;
+            font-size: 2rem;
+            padding: 20px 40px;
+            border-radius: 10px;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 50;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            p {
+                font-size: 1rem;
+                padding: 0 20px;
+            }
+            
+            #info-panel {
+                left: 10px;
+                top: 10px;
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            #score {
+                font-size: 20px;
+            }
+
+            #help-popup {
+                max-width: 90%;
+                padding: 15px;
+            }
+
+            #help-popup h2 {
+                font-size: 1.2rem;
+            }
+
+            #help-popup p, #help-popup li {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="info-panel">
+            <div>স্কোর: <span id="score">0</span></div>
+            <div>লেভেল: <span id="level">1</span></div>
+        </div>
+        
+        <div id="settings-panel">
+            <button id="help-button" class="control-button">❓</button>
+            <button id="sound-button" class="control-button">🔊</button>
+            <button id="theme-button" class="control-button">🌓</button>
+        </div>
+        
+        <div id="start-screen">
+            <h1>3D বল ক্যাচার</h1>
+            <p>প্ল্যাটফর্ম নিয়ন্ত্রণ করতে মাউস বা টাচ ব্যবহার করুন। বুদবুদ ধরুন এবং পয়েন্ট অর্জন করুন!</p>
+            <p><span class="bomb-icon"></span> বোমা এড়িয়ে চলুন! যদি আপনি বোমা ধরেন, গেম ওভার হয়ে যাবে!</p>
+            <button id="start-button" class="game-button">খেলা শুরু করুন</button>
+        </div>
+
+        <div id="game-over-screen">
+            <h1>গেম ওভার!</h1>
+            <p id="game-over-message">আপনি একটি বোমা ধরেছেন!</p>
+            <p>আপনার স্কোর: <span id="final-score">0</span></p>
+            <button id="restart-button" class="game-button">আবার খেলুন</button>
+        </div>
+
+        <div id="level-up-notification">লেভেল আপ!</div>
+
+        <div id="help-popup">
+            <h2>খেলার নিয়ম</h2>
+            <ul>
+                <li><span class="bubble-icon"></span> বুদবুদ ধরুন পয়েন্ট পাওয়ার জন্য</li>
+                <li><span class="bomb-icon"></span> বোমা এড়িয়ে চলুন! বোমা ধরলে গেম ওভার হবে</li>
+                <li>প্ল্যাটফর্ম নিয়ন্ত্রণ করতে মাউস বা টাচ ব্যবহার করুন</li>
+                <li>প্রতি 100 পয়েন্টে লেভেল আপ হবে</li>
+                <li>লেভেল যত বাড়বে, খেলা তত কঠিন হবে</li>
+            </ul>
+            <button id="close-help">বন্ধ করুন</button>
+        </div>
+    </div>
+    
+    <div id="custom-cursor"></div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.body.classList.add('dark');
+            } else {
+                document.body.classList.remove('dark');
+            }
+        });
+
+        // Custom cursor
+        const cursor = document.getElementById('custom-cursor');
+        
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = `${e.clientX}px`;
+            cursor.style.top = `${e.clientY}px`;
+        });
+        
+        document.addEventListener('mousedown', () => {
+            cursor.classList.add('active');
+        });
+        
+        document.addEventListener('mouseup', () => {
+            cursor.classList.remove('active');
+        });
+        
+        // Hide cursor on touch devices
+        if ('ontouchstart' in window) {
+            cursor.style.display = 'none';
+        }
+
+        // Sound management
+        const sounds = {
+            background: new Howl({
+                src: ['https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3?filename=game-music-loop-4-144948.mp3'],
+                loop: true,
+                volume: 0.3,
+                autoplay: false
+            }),
+            bubble: new Howl({
+                src: ['https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c19023.mp3?filename=pop-1-35897.mp3'],
+                volume: 0.5
+            }),
+            bomb: new Howl({
+                src: ['https://cdn.pixabay.com/download/audio/2022/03/15/audio_e3f8752ef4.mp3?filename=explosion-6055.mp3'],
+                volume: 0.7
+            }),
+            levelUp: new Howl({
+                src: ['https://cdn.pixabay.com/download/audio/2021/08/04/audio_b4e8845570.mp3?filename=success-1-6297.mp3'],
+                volume: 0.6
+            }),
+            gameOver: new Howl({
+                src: ['https://cdn.pixabay.com/download/audio/2021/08/04/audio_c518e3e52a.mp3?filename=negative_beeps-6008.mp3'],
+                volume: 0.6
+            })
+        };
+        
+        let soundEnabled = true;
+        
+        const soundButton = document.getElementById('sound-button');
+        const themeButton = document.getElementById('theme-button');
+        const helpButton = document.getElementById('help-button');
+        const closeHelpButton = document.getElementById('close-help');
+        const helpPopup = document.getElementById('help-popup');
+        
+        soundButton.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundButton.textContent = soundEnabled ? '🔊' : '🔇';
+            
+            if (soundEnabled) {
+                if (gameActive) sounds.background.play();
+            } else {
+                sounds.background.pause();
+            }
+        });
+        
+        themeButton.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+        });
+        
+        helpButton.addEventListener('click', () => {
+            helpPopup.style.display = 'block';
+        });
+        
+        closeHelpButton.addEventListener('click', () => {
+            helpPopup.style.display = 'none';
+        });
+
+        // Game variables
+        let scene, camera, renderer, platform, score = 0, level = 1;
+        let objects = [], gameActive = false;
+        let lastTime = 0, objectInterval = 2000; // New object every 2 seconds initially
+        const scoreElement = document.getElementById('score');
+        const levelElement = document.getElementById('level');
+        const finalScoreElement = document.getElementById('final-score');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const levelUpNotification = document.getElementById('level-up-notification');
+        const bubbleColors = [0x48CFAD, 0xFFCE54, 0xEC87C0, 0x5D5CDE, 0xAC92EC];
+        const bombColor = 0xFF4757;
+        
+        // Initialize the game
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.005);
+            
+            // Camera setup
+            const aspect = window.innerWidth / window.innerHeight;
+            camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+            camera.position.set(0, 5, 15);
+            camera.lookAt(0, 0, 0);
+            
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('game-container').appendChild(renderer.domElement);
+            
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 7.5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            
+            // Create platform
+            createPlatform();
+            
+            // Create background
+            createBackground();
+            
+            // Handle resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Start the animation loop
+            animate(0);
+        }
+        
+        function createPlatform() {
+            const geometry = new THREE.BoxGeometry(5, 0.5, 5);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x5D5CDE,
+                specular: 0x009900,
+                shininess: 30,
+                flatShading: true
+            });
+            
+            platform = new THREE.Mesh(geometry, material);
+            platform.position.y = -5;
+            platform.castShadow = true;
+            platform.receiveShadow = true;
+            scene.add(platform);
+            
+            // Mouse/touch control
+            document.addEventListener('mousemove', movePlatform);
+            document.addEventListener('touchmove', movePlatform, { passive: false });
+        }
+        
+        function createBackground() {
+            // Create stars
+            const starsGeometry = new THREE.BufferGeometry();
+            const starsMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.1,
+                transparent: true
+            });
+            
+            const starsVertices = [];
+            for (let i = 0; i < 1000; i++) {
+                const x = (Math.random() - 0.5) * 100;
+                const y = (Math.random() - 0.5) * 100;
+                const z = (Math.random() - 0.5) * 100;
+                starsVertices.push(x, y, z);
+            }
+            
+            starsGeometry.setAttribute(
+                'position',
+                new THREE.Float32BufferAttribute(starsVertices, 3)
+            );
+            
+            const stars = new THREE.Points(starsGeometry, starsMaterial);
+            scene.add(stars);
+        }
+        
+        function createFallingObject() {
+            if (!gameActive) return;
+            
+            // 20% chance to create a bomb (higher chances at higher levels)
+            const isBomb = Math.random() < (0.1 + (level * 0.02));
+            
+            const size = 0.3 + Math.random() * 0.5; // Random size
+            const geometry = new THREE.SphereGeometry(size, 32, 32);
+            
+            let material;
+            let objectValue;
+            
+            if (isBomb) {
+                material = new THREE.MeshPhongMaterial({
+                    color: bombColor,
+                    shininess: 100,
+                    emissive: 0xFF4757,
+                    emissiveIntensity: 0.5
+                });
+                objectValue = 0; // Bombs have no point value
+            } else {
+                material = new THREE.MeshPhongMaterial({
+                    color: bubbleColors[Math.floor(Math.random() * bubbleColors.length)],
+                    shininess: 100,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                objectValue = Math.floor(size * 10); // Bigger bubbles worth more points
+            }
+            
+            const object = new THREE.Mesh(geometry, material);
+            
+            // Random position at the top
+            object.position.x = (Math.random() - 0.5) * 10;
+            object.position.y = 10;
+            object.position.z = (Math.random() - 0.5) * 5;
+            
+            // Random speed based on level
+            object.userData = {
+                speed: 0.03 + (Math.random() * 0.02) + (level * 0.005),
+                value: objectValue,
+                isBomb: isBomb
+            };
+            
+            object.castShadow = true;
+            scene.add(object);
+            objects.push(object);
+            
+            // If it's a bomb, add fire effect
+            if (isBomb) {
+                createBombFireEffect(object);
+            }
+        }
+        
+        function createBombFireEffect(bomb) {
+            // Create fire particles
+            const particleCount = 15;
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            const colors = [];
+            
+            for (let i = 0; i < particleCount; i++) {
+                // Particles emerge from the bottom of the bomb
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * 0.2;
+                
+                const x = Math.sin(angle) * radius;
+                const y = -0.3 - Math.random() * 0.2; // Below the bomb
+                const z = Math.cos(angle) * radius;
+                
+                vertices.push(x, y, z);
+                
+                // Gradient colors: yellow to orange to red
+                const colorIndex = Math.random();
+                if (colorIndex < 0.3) {
+                    colors.push(1, 1, 0); // Yellow
+                } else if (colorIndex < 0.7) {
+                    colors.push(1, 0.5, 0); // Orange
+                } else {
+                    colors.push(1, 0, 0); // Red
+                }
+            }
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            
+            const material = new THREE.PointsMaterial({
+                size: 0.1,
+                transparent: true,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const fireParticles = new THREE.Points(geometry, material);
+            fireParticles.userData = { 
+                age: 0,
+                lifeTime: 1 
+            };
+            
+            bomb.add(fireParticles);
+            
+            return fireParticles;
+        }
+        
+        function updateBombFireEffect(bomb) {
+            if (!bomb) return;
+            
+            bomb.children.forEach(child => {
+                if (child instanceof THREE.Points) {
+                    // Update particle positions
+                    const positions = child.geometry.attributes.position.array;
+                    
+                    for (let i = 0; i < positions.length; i += 3) {
+                        // Make particles rise and flicker
+                        positions[i] += (Math.random() - 0.5) * 0.02;
+                        positions[i + 1] -= Math.random() * 0.05; // Move upward (negative y)
+                        positions[i + 2] += (Math.random() - 0.5) * 0.02;
+                    }
+                    
+                    child.geometry.attributes.position.needsUpdate = true;
+                    
+                    // Increase age
+                    child.userData.age += 0.01;
+                    
+                    // If particles are too old, reset them
+                    if (child.userData.age > child.userData.lifeTime) {
+                        // Reset positions
+                        for (let i = 0; i < positions.length; i += 3) {
+                            const angle = Math.random() * Math.PI * 2;
+                            const radius = Math.random() * 0.2;
+                            
+                            positions[i] = Math.sin(angle) * radius;
+                            positions[i + 1] = -0.3 - Math.random() * 0.2;
+                            positions[i + 2] = Math.cos(angle) * radius;
+                        }
+                        
+                        child.geometry.attributes.position.needsUpdate = true;
+                        child.userData.age = 0;
+                    }
+                }
+            });
+        }
+        
+        function movePlatform(event) {
+            if (!gameActive) return;
+            
+            // Determine if it's touch or mouse
+            let clientX, clientY;
+            
+            if (event.type === 'touchmove') {
+                event.preventDefault(); // Prevent scrolling
+                clientX = event.touches[0].clientX;
+                clientY = event.touches[0].clientY;
+            } else {
+                clientX = event.clientX;
+                clientY = event.clientY;
+            }
+            
+            // Convert screen coordinates to 3D coordinates
+            const x = (clientX / window.innerWidth) * 2 - 1;
+            
+            // Move platform based on mouse/touch position
+            platform.position.x = x * 6;
+            
+            // Limit platform movement
+            if (platform.position.x > 6) platform.position.x = 6;
+            if (platform.position.x < -6) platform.position.x = -6;
+        }
+        
+        function checkCollisions() {
+            for (let i = objects.length - 1; i >= 0; i--) {
+                const object = objects[i];
+                
+                // Move the object downward
+                object.position.y -= object.userData.speed;
+                
+                // Rotate the object as it falls
+                object.rotation.x += 0.01;
+                object.rotation.z += 0.01;
+                
+                // Update bomb fire effects
+                if (object.userData.isBomb) {
+                    updateBombFireEffect(object);
+                }
+                
+                // Check if object is caught by platform
+                if (object.position.y <= platform.position.y + 1 && 
+                    Math.abs(object.position.x - platform.position.x) < 3 &&
+                    Math.abs(object.position.z - platform.position.z) < 3) {
+                    
+                    if (object.userData.isBomb) {
+                        // Game over if bomb is caught
+                        if (soundEnabled) sounds.bomb.play();
+                        createExplosionEffect(object.position.clone());
+                        gameOver();
+                    } else {
+                        // Add points if bubble is caught
+                        if (soundEnabled) sounds.bubble.play();
+                        updateScore(object.userData.value);
+                        createBubblePopEffect(object.position.clone(), object.material.color);
+                    }
+                    
+                    // Remove object
+                    scene.remove(object);
+                    objects.splice(i, 1);
+                }
+                // Check if object is missed
+                else if (object.position.y < -10) {
+                    scene.remove(object);
+                    objects.splice(i, 1);
+                }
+            }
+        }
+        
+        function createBubblePopEffect(position, color) {
+            const particleCount = 20;
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const x = (Math.random() - 0.5) * 2;
+                const y = (Math.random() - 0.5) * 2;
+                const z = (Math.random() - 0.5) * 2;
+                vertices.push(x, y, z);
+            }
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            
+            const material = new THREE.PointsMaterial({
+                color: color,
+                size: 0.1,
+                transparent: true
+            });
+            
+            const particles = new THREE.Points(geometry, material);
+            particles.position.copy(position);
+            scene.add(particles);
+            
+            // Animation for particles
+            const startTime = Date.now();
+            
+            function animateParticles() {
+                const elapsedTime = Date.now() - startTime;
+                
+                if (elapsedTime < 1000) { // 1 second animation
+                    const positions = particles.geometry.attributes.position.array;
+                    
+                    for (let i = 0; i < positions.length; i += 3) {
+                        positions[i] += (Math.random() - 0.5) * 0.1;
+                        positions[i + 1] += (Math.random() - 0.5) * 0.1;
+                        positions[i + 2] += (Math.random() - 0.5) * 0.1;
+                    }
+                    
+                    particles.geometry.attributes.position.needsUpdate = true;
+                    material.opacity = 1 - (elapsedTime / 1000);
+                    
+                    requestAnimationFrame(animateParticles);
+                } else {
+                    scene.remove(particles);
+                }
+            }
+            
+            animateParticles();
+        }
+        
+        function createExplosionEffect(position) {
+            const particleCount = 100;
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            const colors = [];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const x = (Math.random() - 0.5) * 0.2;
+                const y = (Math.random() - 0.5) * 0.2;
+                const z = (Math.random() - 0.5) * 0.2;
+                vertices.push(x, y, z);
+                
+                // Gradient colors for explosion: yellow, orange, red
+                const colorIndex = Math.random();
+                if (colorIndex < 0.3) {
+                    colors.push(1, 1, 0); // Yellow
+                } else if (colorIndex < 0.7) {
+                    colors.push(1, 0.5, 0); // Orange
+                } else {
+                    colors.push(1, 0, 0); // Red
+                }
+            }
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            
+            const material = new THREE.PointsMaterial({
+                size: 0.2,
+                transparent: true,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const particles = new THREE.Points(geometry, material);
+            particles.position.copy(position);
+            scene.add(particles);
+            
+            // Animation for explosion
+            const startTime = Date.now();
+            
+            function animateExplosion() {
+                const elapsedTime = Date.now() - startTime;
+                
+                if (elapsedTime < 1500) { // 1.5 second animation
+                    const positions = particles.geometry.attributes.position.array;
+                    const speed = 0.15; // Explosion speed
+                    
+                    for (let i = 0; i < positions.length; i += 3) {
+                        // Move particles outward from center
+                        const dirX = positions[i];
+                        const dirY = positions[i + 1];
+                        const dirZ = positions[i + 2];
+                        
+                        // Normalize direction
+                        const length = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ) || 1;
+                        
+                        // Update position
+                        positions[i] += (dirX / length) * speed;
+                        positions[i + 1] += (dirY / length) * speed;
+                        positions[i + 2] += (dirZ / length) * speed;
+                    }
+                    
+                    particles.geometry.attributes.position.needsUpdate = true;
+                    material.opacity = 1 - (elapsedTime / 1500);
+                    
+                    requestAnimationFrame(animateExplosion);
+                } else {
+                    scene.remove(particles);
+                }
+            }
+            
+            animateExplosion();
+        }
+        
+        function updateScore(points) {
+            score += points;
+            scoreElement.textContent = score;
+            
+            // Level up every 100 points
+            const newLevel = Math.floor(score / 100) + 1;
+            if (newLevel > level) {
+                level = newLevel;
+                levelElement.textContent = level;
+                
+                // Show level up notification
+                levelUpNotification.textContent = `লেভেল ${level}!`;
+                levelUpNotification.style.opacity = '1';
+                
+                if (soundEnabled) sounds.levelUp.play();
+                
+                setTimeout(() => {
+                    levelUpNotification.style.opacity = '0';
+                }, 2000);
+                
+                // Decrease interval between objects as level increases
+                objectInterval = Math.max(500, 2000 - (level * 200));
+            }
+        }
+        
+        function gameOver() {
+            gameActive = false;
+            finalScoreElement.textContent = score;
+            gameOverScreen.style.display = 'flex';
+            
+            if (soundEnabled) {
+                sounds.gameOver.play();
+                sounds.background.pause();
+            }
+        }
+        
+        function animate(time) {
+            requestAnimationFrame(animate);
+            
+            if (gameActive) {
+                // Check if it's time to create a new object
+                if (time - lastTime > objectInterval) {
+                    createFallingObject();
+                    lastTime = time;
+                }
+                
+                // Check for collisions
+                checkCollisions();
+                
+                // Rotate platform slightly for effect
+                platform.rotation.y += 0.005;
+            }
+            
+            // Animate background
+            if (scene.fog) {
+                // Cycle fog color for an ambient effect
+                const fogHue = (time * 0.0001) % 1;
+                scene.fog.color.setHSL(fogHue, 0.5, 0.2);
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function startGame() {
+            gameActive = true;
+            score = 0;
+            level = 1;
+            scoreElement.textContent = score;
+            levelElement.textContent = level;
+            objectInterval = 2000;
+            
+            // Remove existing objects
+            for (const object of objects) {
+                scene.remove(object);
+            }
+            objects = [];
+            
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            
+            if (soundEnabled) {
+                sounds.background.play();
+            }
+        }
+        
+        // Initialize the game
+        init();
+        
+        // Event listeners
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+    </script>
+</body>
+</html>
