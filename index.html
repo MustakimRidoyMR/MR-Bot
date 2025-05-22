@@ -2340,26 +2340,37 @@ function showSuccess() {
             updateCustomStyles();
         });
 
-          // Wait for 5 to 10 minutes randomly (in milliseconds)
-  const minTime = 5 * 60 * 1000; // 5 minutes
-  const maxTime = 10 * 60 * 1000; // 10 minutes
-  const delay = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+          const adUrl = "https://www.profitableratecpm.com/m7j44g75?key=90f36207646d410dc5c03e6c6816a890"; // Replace with your real link
 
-  setTimeout(() => {
-    document.getElementById('message').style.display = 'block';
+  function scheduleAdPopup() {
+    const minTime = 1 * 60 * 1000; // 1 minute
+    const maxTime = 10 * 60 * 1000; // 10 minutes
+    const delay = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
 
-    let seconds = 5;
-    const countdown = setInterval(() => {
-      document.getElementById('countdown').textContent = seconds;
-      seconds--;
+    setTimeout(() => {
+      document.getElementById('message').style.display = 'block';
 
-      if (seconds < 0) {
-        clearInterval(countdown);
-        const adUrl = "https://www.profitableratecpm.com/m7j44g75?key=90f36207646d410dc5c03e6c6816a890"; // Replace with your Adsterra link
+      let seconds = 5;
+      const countdown = setInterval(() => {
+        document.getElementById('countdown').textContent = seconds;
+        seconds--;
+
+        if (seconds < 0) {
+          clearInterval(countdown);
           window.open(adUrl, "_blank");
-      }
-    }, 1000);
-  }, delay);
+
+          // Hide message again
+          document.getElementById('message').style.display = 'none';
+
+          // 🔁 Call the function again for next cycle
+          scheduleAdPopup();
+        }
+      }, 1000);
+    }, delay);
+  }
+
+  // Start the first cycle
+  scheduleAdPopup();
     </script>
 </body>
 </html>
