@@ -306,7 +306,35 @@
 .sticky-link-button.iframe-mode .icon-pulse {
     margin-right: 12px; 
 }
- 
+
+        .responsive-form-container {
+    max-width: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.responsive-form-wrapper {
+    position: relative;
+    overflow: hidden;
+    padding-top: 100vh; /* ভিউপোর্ট হাইট */
+}
+
+.responsive-form-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/* অপশনাল: ম্যাক্সিমাম উইডথ সেট করা */
+@media screen and (min-width: 1200px) {
+    .responsive-form-container {
+        max-width: 1140px;
+    }
+}
+
         /* Scroll progress bar */
         .scroll-progress {
             position: fixed;
@@ -1587,35 +1615,6 @@
                         </div>
                     </div>
                 </div>-->
-                <style>
-.responsive-form-container {
-    max-width: 100%;
-    margin: 0 auto;
-    overflow: hidden;
-}
-
-.responsive-form-wrapper {
-    position: relative;
-    overflow: hidden;
-    padding-top: 100vh; /* ভিউপোর্ট হাইট */
-}
-
-.responsive-form-wrapper iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
-}
-
-/* অপশনাল: ম্যাক্সিমাম উইডথ সেট করা */
-@media screen and (min-width: 1200px) {
-    .responsive-form-container {
-        max-width: 1140px;
-    }
-}
-</style>
 
 <div class="responsive-form-container">
     <div class="responsive-form-wrapper">
