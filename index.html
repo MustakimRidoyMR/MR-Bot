@@ -186,7 +186,127 @@
         .glow {
             box-shadow: 0 0 15px var(--theme-color);
         }
+
+.sticky-link-button {
+  position: fixed; 
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%); 
+  z-index: 999999; 
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px 12px 24px; 
+  text-decoration: none; 
+  color: white;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+  backdrop-filter: blur(12px) saturate(1.8);
+  -webkit-backdrop-filter: blur(12px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  
+  border-right: none; 
+  border-radius: 50px 0 0 50px; 
+  
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow: hidden; 
+}
+
+.sticky-link-button:before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 200%;
+  height: 100%;
+  
+  background: linear-gradient(
+    115deg, 
+    transparent 20%, 
+    rgba(0, 255, 255, 0.8), 
+    rgba(255, 0, 255, 0.8), 
+    transparent 80%
+  );
+  
+  transition: all 0.5s ease-in-out;
+  animation: rotate-gradient 6s linear infinite; 
+  z-index: -1;
+}
+
+.sticky-link-button:hover {
+  transform: translateY(-50%) scale(1.05); 
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+}
+
+.sticky-link-button:hover:before {
+    animation-duration: 4s; 
+}
+
+@keyframes rotate-gradient {
+  from {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateX(-50%) rotate(360deg);
+  }
+}
+
+.sticky-link-button .icon-pulse {
+  margin-right: 12px;
+  animation: pulse-icon 2s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+
+@keyframes pulse-icon {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.sticky-link-button .button-text {
+    opacity: 0.5;
+    transform: translateX(20px);
+    transition: all 0.3s ease;
+}
+.sticky-link-button:hover .button-text {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.sticky-link-button.iframe-mode {
+    opacity: 0.7;
+    writing-mode: unset; 
+    border-radius: 50px 0 0 50px; 
+    display: flex;
+    flex-direction: row; 
+    align-items: center;
+    padding: 12px 18px 12px 24px;
+    transform:  translateX(40%) rotate(-90deg);
+}
+        .sticky-link-button.iframe-mode:hover {
+    transform: scale(1); 
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); 
+}
         
+.sticky-link-button.iframe-mode:hover:before {
+    animation-duration: 6s;
+}
+        
+.sticky-link-button.iframe-mode .icon-pulse,
+.sticky-link-button.iframe-mode .button-text {
+    transform: none; 
+    opacity: 1; 
+    margin: 0; 
+}
+
+.sticky-link-button.iframe-mode .icon-pulse {
+    margin-right: 12px; 
+}
+ 
         /* Scroll progress bar */
         .scroll-progress {
             position: fixed;
@@ -1750,10 +1870,44 @@
         </svg>
     </button>
 
+    
+<!-- Animated Gradient Link Button -->
+<a href="https://mymrroom.netlify.app" target="_blank" rel="noopener noreferrer" class="sticky-link-button">
+    <i class="fas fa-arrow-right icon-pulse"></i>
+    <span class="button-text">Remove ads for this page</span>
+</a>
+
     <!-- JavaScript -->
     <script>
         // Wait for DOM content to load
         document.addEventListener('DOMContentLoaded', function() {
+
+const stickyButton = document.querySelector('.sticky-link-button');
+
+if (stickyButton) {
+    const isInsideIframe = (window.top !== window.self);
+    
+    if (isInsideIframe) {
+        stickyButton.classList.add('iframe-mode');
+        
+        stickyButton.style.pointerEvents = 'none';
+        stickyButton.removeAttribute('href');
+
+        stickyButton.style.background = 'linear-gradient(135deg, rgba(30, 150, 255, 0.2), rgba(0, 0, 0, 0.1))'; 
+
+        const icon = stickyButton.querySelector('i');
+        const textSpan = stickyButton.querySelector('.button-text');
+
+        if (icon) {
+            icon.className = 'fas fa-shield-alt icon-pulse'; 
+            icon.style.animation = 'none'; 
+        }
+
+        if (textSpan) {
+            textSpan.textContent = 'This app is Ad-Free';
+        }
+    }
+}
             // Scroll Progress Bar
             const scrollProgress = document.getElementById('scrollProgress');
             const totalHeight = document.body.scrollHeight - window.innerHeight;
