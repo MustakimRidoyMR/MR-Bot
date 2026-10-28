@@ -2400,11 +2400,11 @@ function showSuccess() {
   scheduleAdPopup();
     </script>
     <script>
-/* MR Bot upgrade: real chatbot demo, history, fullscreen, Bangla, accessibility. Design and colours are untouched. */
+
 (()=>{'use strict';
 const AMAZON='https://www.amazon.com/gp/product/B0GM8M5BBX',
-PROXY='', /* paste your Cloudflare Worker URL here (see worker.js): it hides the ngrok address and the API token */
-DIRECT=atob('aHR0cHM6Ly9wdXJnZS1zaGltbXktcG9saXNoLm5ncm9rLWZyZWUuZGV2'), /* temporary fallback while PROXY is empty (sends no token). Once the Worker works, change this to DIRECT='' */
+PROXY='https://mrbot.mdmustakimbillah992.workers.dev', 
+DIRECT='',
 ICON='MRBot_icon.png',AD='166cd95a37781f8e08654d0446ac7445',AD_EVERY=3,FILE='MRBot_Convertions.txt',
 OFFLINE='MRBot is Offline. Please try again in 3-4 hours...',
 GREET="Hello! I'm MR Bot, your multimodal AI assistant. How can I help you today?",
